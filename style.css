@@ -568,3 +568,54 @@ button:disabled {
         transition: none !important;
     }
 }
+
+/* Compact desktop layout */
+@media (min-width: 768px) {
+  body {
+    padding: 20px;
+  }
+
+  .container {
+    width: 100%;
+    max-width: 650px;
+    margin: 0 auto;
+  }
+
+  .weather-card {
+    padding: 28px;
+    border-radius: 24px;
+  }
+
+  #city {
+    font-size: 26px;
+  }
+
+  #temp {
+    font-size: 64px;
+  }
+
+  #weather-icon {
+    width: 100px;
+    height: 100px;
+  }
+
+  .search-form {
+    margin-bottom: 20px;
+  }
+}
+
+/* Smaller screens */
+@media (max-width: 767px) {
+  .container {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .weather-card {
+    padding: 20px;
+  }
+
+  #temp {
+    font-size: 54px;
+  }
+}
