@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!-- <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -26,5 +26,130 @@
         </div>
     </div>
     <script src="app.js"></script>
+</body>
+</html> -->
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta name="theme-color" content="#10254b">
+    <meta name="description" content="Check current weather, temperature, humidity, wind speed and atmospheric pressure for your location.">
+
+    <title>Weather App | Live Weather</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="./style.css">
+    <script src="./app.js" defer></script>
+</head>
+<body>
+    <main class="page-shell">
+        <header class="site-header">
+            <a class="brand" href="./" aria-label="Weather App home">
+                <span class="brand-icon" aria-hidden="true">🌤️</span>
+                <span>Weather App</span>
+            </a>
+            <p class="eyebrow">REAL WEATHER <span>•</span> REAL TIME</p>
+        </header>
+
+        <section class="app-main" aria-label="Current weather dashboard">
+            <form class="search-form" id="search-form">
+                <span class="search-location-icon" aria-hidden="true">⌖</span>
+                <input
+                    type="search"
+                    id="input-box"
+                    class="input-box"
+                    placeholder="Enter city name..."
+                    aria-label="Search weather by city"
+                    autocomplete="off"
+                    maxlength="100"
+                    required
+                >
+                <button class="search-button" type="submit" aria-label="Search city">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <circle cx="10.8" cy="10.8" r="6.8"></circle>
+                        <path d="m16 16 4.5 4.5"></path>
+                    </svg>
+                </button>
+            </form>
+
+            <section class="weather-body" aria-label="Weather information">
+                <div class="location-details">
+                    <div class="location-line">
+                        <span class="line-icon" aria-hidden="true">⌖</span>
+                        <h1 id="city">Finding your location...</h1>
+                    </div>
+
+                    <div class="date-line">
+                        <span class="line-icon" aria-hidden="true">▦</span>
+                        <p id="date">Loading local date...</p>
+                    </div>
+                </div>
+
+                <div class="weather-status">
+                    <div class="img" id="weather-icon">
+                        <span class="weather-placeholder" aria-hidden="true">🌤️</span>
+                    </div>
+
+                    <p class="temp" id="temp">--°</p>
+                    <p class="weather" id="weather">Waiting for weather data</p>
+                    <p class="min-max" id="min-max">H: --°C <span>│</span> L: --°C</p>
+                </div>
+
+                <div class="weather-details" aria-label="Additional weather details">
+                    <article class="detail-card">
+                        <span class="detail-icon feels-icon" aria-hidden="true">♨</span>
+                        <div>
+                            <p class="detail-label">FEELS LIKE</p>
+                            <p class="detail-value" id="feels-like">--°C</p>
+                        </div>
+                    </article>
+
+                    <article class="detail-card">
+                        <span class="detail-icon humidity-icon" aria-hidden="true">♧</span>
+                        <div>
+                            <p class="detail-label">HUMIDITY</p>
+                            <p class="detail-value" id="humidity">--%</p>
+                        </div>
+                    </article>
+
+                    <article class="detail-card">
+                        <span class="detail-icon wind-icon" aria-hidden="true">≋</span>
+                        <div>
+                            <p class="detail-label">WIND SPEED</p>
+                            <p class="detail-value" id="wind">-- m/s</p>
+                        </div>
+                    </article>
+
+                    <article class="detail-card">
+                        <span class="detail-icon pressure-icon" aria-hidden="true">◉</span>
+                        <div>
+                            <p class="detail-label">PRESSURE</p>
+                            <p class="detail-value" id="pressure">-- hPa</p>
+                        </div>
+                    </article>
+                </div>
+
+                <div class="status-line" role="status" aria-live="polite">
+                    <span class="status-dot" id="status-dot"></span>
+                    <p id="weather-message">Requesting your location...</p>
+                </div>
+            </section>
+        </section>
+
+        <footer class="app-footer">
+            <p>LIVE WEATHER <span>•</span> POWERED BY OPENWEATHERMAP</p>
+            <div class="footer-decoration" aria-hidden="true">
+                <span></span><b>♥</b><span></span>
+            </div>
+        </footer>
+    </main>
 </body>
 </html>
