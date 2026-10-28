@@ -80,158 +80,184 @@
 
 
 
+
 const weatherApi = {
     key: "5b5f030a2f83455759050b3ce5bee87a",
     baseUrl: "https://api.openweathermap.org/data/2.5/weather"
 };
 
-const searchInputBox = document.getElementById("input-box");
+const searchForm = document.getElementById("search-form");
+const searchInput = document.getElementById("input-box");
+
 let requestId = 0;
 
-const themes = {
-    Clear: ["#f59e0b", "#ea580c", "#7c2d12"],
-    Clouds: ["#334155", "#475569", "#0f172a"],
-    Rain: ["#0f172a", "#1d4ed8", "#172554"],
-    Drizzle: ["#164e63", "#0369a1", "#0f172a"],
-    Thunderstorm: ["#111827", "#4338ca", "#581c87"],
-    Snow: ["#475569", "#0284c7", "#172554"],
-    Mist: ["#475569", "#64748b", "#1e293b"],
-    Fog: ["#475569", "#64748b", "#1e293b"],
-    Haze: ["#78716c", "#92400e", "#292524"],
-    Smoke: ["#292524", "#57534e", "#1c1917"],
-    Dust: ["#92400e", "#b45309", "#451a03"],
-    Sand: ["#92400e", "#d97706", "#451a03"],
-    Ash: ["#292524", "#57534e", "#1c1917"],
-    Squall: ["#164e63", "#334155", "#0f172a"],
-    Tornado: ["#111827", "#7f1d1d", "#1f2937"]
+const weatherThemes = {
+    Clear: ["#f59e0b", "#ea580c", "#10234b"],
+    Clouds: ["#64748b", "#475569", "#101e3c"],
+    Rain: ["#1d4ed8", "#334155", "#071629"],
+    Drizzle: ["#0284c7", "#334155", "#0b2545"],
+    Thunderstorm: ["#4338ca", "#581c87", "#080e27"],
+    Snow: ["#7dd3fc", "#64748b", "#10234b"],
+    Mist: ["#94a3b8", "#64748b", "#17243c"],
+    Fog: ["#94a3b8", "#64748b", "#17243c"],
+    Haze: ["#d6a77a", "#78716c", "#292b42"],
+    Smoke: ["#78716c", "#57534e", "#171b2b"],
+    Dust: ["#d97706", "#92400e", "#281b26"],
+    Sand: ["#f59e0b", "#b45309", "#35202b"],
+    Ash: ["#78716c", "#44403c", "#171b2b"],
+    Squall: ["#0e7490", "#334155", "#071629"],
+    Tornado: ["#7f1d1d", "#374151", "#111827"]
 };
 
-// Remove sample HTML values so no fake weather is displayed.
-function clearInitialData() {
-    const ids = ["city", "date", "temp", "min-max", "weather"];
+function setStatus(message, type = "loading") {
+    const messageElement = document.getElementById("weather-message");
+    const dot = document.getElementById("status-dot");
 
-    ids.forEach(id => {
-        const element = document.getElementById(id);
-        if (element) element.textContent = "";
-    });
+    messageElement.textContent = message;
+    dot.className = "status-dot";
 
-    const imageBox = document.querySelector(".img");
-    if (imageBox) imageBox.replaceChildren();
+    if (type === "success") dot.classList.add("success");
+    if (type === "error") dot.classList.add("error");
 }
 
-function showMessage(message, isError = false) {
-    let box = document.getElementById("weather-message");
+function clearWeather() {
+    document.getElementById("city").textContent = "Loading weather...";
+    document.getElementById("date").textContent = "";
+    document.getElementById("temp").textContent = "--°C";
+    document.getElementById("weather").textContent = "Getting current conditions...";
+    document.getElementById("min-max").textContent = "H: --°C  |  L: --°C";
 
-    if (!box) {
-        box = document.createElement("p");
-        box.id = "weather-message";
-        box.className = "weather-message";
-        document.querySelector(".app-main").appendChild(box);
-    }
+    document.getElementById("feels-like").textContent = "--°C";
+    document.getElementById("humidity").textContent = "--%";
+    document.getElementById("wind").textContent = "-- m/s";
+    document.getElementById("pressure").textContent = "-- hPa";
 
-    box.textContent = message;
-    box.classList.toggle("error", isError);
-    box.hidden = !message;
+    const icon = document.getElementById("weather-icon");
+    icon.replaceChildren();
+
+    const placeholder = document.createElement("span");
+    placeholder.className = "weather-placeholder";
+    placeholder.textContent = "🌤️";
+    icon.appendChild(placeholder);
 }
 
 function setLoading(loading) {
-    if (!searchInputBox) return;
+    const button = document.querySelector(".search-button");
 
-    // Keep search available even while location is being detected.
-    searchInputBox.setAttribute("aria-busy", String(loading));
-    searchInputBox.placeholder = loading
-        ? "Detecting location / loading weather..."
-        : "Enter city name...";
+    button.disabled = loading;
+    button.setAttribute("aria-busy", String(loading));
 }
 
-function createWeatherDetails() {
-    let details = document.getElementById("weather-details");
+function setWeatherBackground(condition) {
+    const colors = weatherThemes[condition] || weatherThemes.Clouds;
 
-    if (!details) {
-        details = document.createElement("div");
-        details.id = "weather-details";
-        details.className = "weather-details";
+    document.body.style.background = `
+        radial-gradient(
+            ellipse at 78% 35%,
+            ${colors[0]} 0%,
+            transparent 38%
+        ),
+        radial-gradient(
+            ellipse at 15% 15%,
+            ${colors[1]} 0%,
+            transparent 45%
+        ),
+        linear-gradient(
+            155deg,
+            ${colors[0]} 0%,
+            ${colors[2]} 65%,
+            #071629 100%
+        )
+    `;
 
-        document.querySelector(".weather-body").appendChild(details);
-    }
-
-    return details;
+    document.body.style.backgroundAttachment = "fixed";
 }
 
-function createFooter() {
-    if (document.querySelector(".app-footer")) return;
+function renderWeatherIcon(iconCode, description) {
+    const container = document.getElementById("weather-icon");
+    container.replaceChildren();
 
-    const footer = document.createElement("div");
-    footer.className = "app-footer";
-    footer.textContent = "LIVE WEATHER · POWERED BY OPENWEATHERMAP";
-
-    document.querySelector(".app-main").appendChild(footer);
-}
-
-if (searchInputBox) {
-    searchInputBox.addEventListener("keydown", event => {
-        if (event.key === "Enter") {
-            event.preventDefault();
-            getWeatherByCity(searchInputBox.value);
-        }
-    });
-}
-
-// Automatically detect the visitor's location on page load.
-function detectCurrentLocation() {
-    if (!navigator.geolocation) {
-        showMessage(
-            "Location is not supported by your browser. Search for a city instead.",
-            true
-        );
+    if (!iconCode) {
+        const placeholder = document.createElement("span");
+        placeholder.className = "weather-placeholder";
+        placeholder.textContent = "🌤️";
+        container.appendChild(placeholder);
         return;
     }
 
-    showMessage("Please allow location access to see your local weather.");
+    const image = document.createElement("img");
+    image.src = `https://openweathermap.org/img/wn/${encodeURIComponent(iconCode)}@2x.png`;
+    image.alt = description;
+    image.width = 150;
+    image.height = 150;
+    image.loading = "eager";
 
-    navigator.geolocation.getCurrentPosition(
-        position => {
-            getWeatherByCoordinates(
-                position.coords.latitude,
-                position.coords.longitude
-            );
-        },
-        error => {
-            let message;
+    image.addEventListener("error", () => {
+        if (!image.isConnected) return;
 
-            switch (error.code) {
-                case error.PERMISSION_DENIED:
-                    message =
-                        "Location access denied. Enter a city name to see its weather.";
-                    break;
-                case error.POSITION_UNAVAILABLE:
-                    message =
-                        "Your location is unavailable. Please search for a city.";
-                    break;
-                case error.TIMEOUT:
-                    message =
-                        "Location request timed out. You can search for a city.";
-                    break;
-                default:
-                    message = "Unable to detect location. Please search for a city.";
-            }
+        const placeholder = document.createElement("span");
+        placeholder.className = "weather-placeholder";
+        placeholder.textContent = "🌤️";
+        container.replaceChildren(placeholder);
+    }, { once: true });
 
-            showMessage(message, true);
-            setLoading(false);
-        },
-        {
-            enableHighAccuracy: false,
-            timeout: 12000,
-            maximumAge: 300000
-        }
-    );
+    container.appendChild(image);
 }
 
-async function fetchWeather(params) {
-    const thisRequest = ++requestId;
+function formatDate() {
+    return new Intl.DateTimeFormat(undefined, {
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+        year: "numeric"
+    }).format(new Date());
+}
+
+function showWeatherReport(data) {
+    const condition = data.weather?.[0]?.main || "Clouds";
+    const description = data.weather?.[0]?.description || condition;
+    const iconCode = data.weather?.[0]?.icon;
+
+    document.getElementById("city").textContent =
+        [data.name, data.sys?.country].filter(Boolean).join(", ");
+
+    document.getElementById("date").textContent = formatDate();
+
+    document.getElementById("temp").textContent =
+        `${Math.round(data.main.temp)}°C`;
+
+    document.getElementById("weather").textContent =
+        description.charAt(0).toUpperCase() + description.slice(1);
+
+    document.getElementById("min-max").innerHTML =
+        `H: ${Math.round(data.main.temp_max)}°C` +
+        ` <span>│</span> ` +
+        `L: ${Math.round(data.main.temp_min)}°C`;
+
+    document.getElementById("feels-like").textContent =
+        `${Math.round(data.main.feels_like)}°C`;
+
+    document.getElementById("humidity").textContent =
+        `${data.main.humidity}%`;
+
+    document.getElementById("wind").textContent =
+        `${data.wind?.speed ?? 0} m/s`;
+
+    document.getElementById("pressure").textContent =
+        `${data.main.pressure} hPa`;
+
+    renderWeatherIcon(iconCode, description);
+    setWeatherBackground(condition);
+
+    document.title =
+        `${data.name} ${Math.round(data.main.temp)}°C | Weather App`;
+}
+
+async function fetchWeather(params, expectedRequestId) {
+    const thisRequest = expectedRequestId ?? ++requestId;
 
     setLoading(true);
-    showMessage("Getting current weather...");
+    setStatus("Fetching current weather data...");
 
     try {
         params.set("appid", weatherApi.key);
@@ -246,34 +272,41 @@ async function fetchWeather(params) {
         if (thisRequest !== requestId) return;
 
         if (!response.ok) {
-            if (response.status === 404) {
-                throw new Error("Location not found. Please try another city.");
+            if (response.status === 401) {
+                throw new Error(
+                    "Weather API key is invalid or not activated."
+                );
             }
 
-            if (response.status === 401) {
-                throw new Error("Weather API key is invalid or not activated.");
+            if (response.status === 404) {
+                throw new Error(
+                    "City not found. Please check the spelling."
+                );
             }
 
             if (response.status === 429) {
-                throw new Error("Too many requests. Please try again later.");
+                throw new Error(
+                    "Request limit reached. Please try again later."
+                );
             }
 
-            throw new Error(data.message || "Unable to retrieve weather.");
+            throw new Error(
+                data.message || "Unable to retrieve weather."
+            );
         }
 
         showWeatherReport(data);
-        showMessage("");
+        setStatus("Weather updated successfully.", "success");
     } catch (error) {
         if (thisRequest !== requestId) return;
 
-        console.error("Weather error:", error);
+        console.error("Weather request failed:", error);
 
-        showMessage(
-            error instanceof TypeError
-                ? "Network error. Check your internet connection."
-                : error.message || "Something went wrong. Please try again.",
-            true
-        );
+        const message = error instanceof TypeError
+            ? "Network error. Please check your internet connection."
+            : error.message || "Unable to load weather.";
+
+        setStatus(message, "error");
     } finally {
         if (thisRequest === requestId) {
             setLoading(false);
@@ -281,21 +314,12 @@ async function fetchWeather(params) {
     }
 }
 
-function getWeatherByCoordinates(latitude, longitude) {
-    const params = new URLSearchParams({
-        lat: latitude,
-        lon: longitude
-    });
-
-    return fetchWeather(params);
-}
-
 function getWeatherByCity(cityName) {
     const city = cityName.trim();
 
     if (!city) {
-        showMessage("Please enter a city name.", true);
-        searchInputBox?.focus();
+        setStatus("Please enter a city name.", "error");
+        searchInput.focus();
         return;
     }
 
@@ -303,94 +327,63 @@ function getWeatherByCity(cityName) {
     return fetchWeather(params);
 }
 
-function showWeatherReport(data) {
-    const condition = data.weather?.[0]?.main || "Clear";
-    const description = data.weather?.[0]?.description || condition;
-    const iconCode = data.weather?.[0]?.icon;
-
-    document.getElementById("city").textContent =
-        `${data.name}, ${data.sys.country}`;
-
-    document.getElementById("temp").innerHTML =
-        `${Math.round(data.main.temp)}&deg;C`;
-
-    document.getElementById("min-max").innerHTML =
-        `H: ${Math.round(data.main.temp_max)}&deg;C` +
-        ` &nbsp; · &nbsp; ` +
-        `L: ${Math.round(data.main.temp_min)}&deg;C`;
-
-    document.getElementById("weather").textContent =
-        description.charAt(0).toUpperCase() + description.slice(1);
-
-    document.getElementById("date").textContent =
-        new Intl.DateTimeFormat(undefined, {
-            weekday: "long",
-            day: "numeric",
-            month: "long",
-            year: "numeric"
-        }).format(new Date());
-
-    // Load the weather icon provided by OpenWeatherMap.
-    const imageBox = document.querySelector(".img");
-
-    if (imageBox) {
-        imageBox.replaceChildren();
-
-        if (iconCode) {
-            const image = document.createElement("img");
-            image.src =
-                `https://openweathermap.org/img/wn/${iconCode}@2x.png`;
-            image.alt = description;
-            image.width = 115;
-            image.height = 115;
-            imageBox.appendChild(image);
-        }
+function detectCurrentLocation() {
+    if (!navigator.geolocation) {
+        setStatus(
+            "Location is not supported. Search for a city instead.",
+            "error"
+        );
+        return;
     }
 
-    // Change background according to actual weather.
-    const colors = themes[condition] || themes.Clear;
+    const locationRequest = ++requestId;
 
-    document.body.style.background = `
-        radial-gradient(ellipse at top left, ${colors[0]}, transparent 55%),
-        radial-gradient(ellipse at bottom right, ${colors[1]}, transparent 55%),
-        linear-gradient(135deg, ${colors[2]}, ${colors[0]})
-    `;
-    document.body.style.backgroundAttachment = "fixed";
+    setStatus("Requesting permission to access your location...");
 
-    // Build weather detail cards from the live API response.
-    const details = createWeatherDetails();
+    navigator.geolocation.getCurrentPosition(
+        position => {
+            // Do not override a newer city search.
+            if (locationRequest !== requestId) return;
 
-    const items = [
-        { label: "🌡️ FEELS LIKE", value: `${Math.round(data.main.feels_like)}°C` },
-        { label: "💧 HUMIDITY", value: `${data.main.humidity}%` },
-        { label: "💨 WIND SPEED", value: `${data.wind?.speed ?? 0} m/s` },
-        { label: "🌡️ PRESSURE", value: `${data.main.pressure} hPa` }
-    ];
+            const params = new URLSearchParams({
+                lat: String(position.coords.latitude),
+                lon: String(position.coords.longitude)
+            });
 
-    details.replaceChildren();
+            fetchWeather(params, locationRequest);
+        },
+        error => {
+            if (locationRequest !== requestId) return;
 
-    items.forEach(item => {
-        const card = document.createElement("div");
-        card.className = "detail-card";
+            let message = "Unable to detect location. Search for a city.";
 
-        const label = document.createElement("span");
-        label.className = "detail-label";
-        label.textContent = item.label;
+            if (error.code === error.PERMISSION_DENIED) {
+                message =
+                    "Location permission denied. Search for a city to continue.";
+            } else if (error.code === error.TIMEOUT) {
+                message =
+                    "Location request timed out. You can search for a city.";
+            } else if (error.code === error.POSITION_UNAVAILABLE) {
+                message =
+                    "Location unavailable. Please search for a city.";
+            }
 
-        const value = document.createElement("span");
-        value.className = "detail-value";
-        value.textContent = item.value;
-
-        card.append(label, value);
-        details.appendChild(card);
-    });
-
-    document.title =
-        `${data.name} ${Math.round(data.main.temp)}°C | Weather App`;
+            setStatus(message, "error");
+            setLoading(false);
+        },
+        {
+            enableHighAccuracy: false,
+            timeout: 15000,
+            maximumAge: 300000
+        }
+    );
 }
 
-// Start with an empty page, then fetch real weather.
-clearInitialData();
-createWeatherDetails();
-createFooter();
+searchForm.addEventListener("submit", event => {
+    event.preventDefault();
+    getWeatherByCity(searchInput.value);
+});
+
+// Do not display sample weather from HTML while loading.
+clearWeather();
 detectCurrentLocation();
